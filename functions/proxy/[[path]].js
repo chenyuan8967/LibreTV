@@ -4,13 +4,13 @@
 // 在 Cloudflare Pages 设置 -> 函数 -> 环境变量绑定 中设置以下变量:
 // CACHE_TTL (例如 86400)
 // MAX_RECURSION (例如 5)
-// FILTER_DISCONTINUITY (不再需要, 设为 false 或移除)
+// FILTER_DISCONTINUITY (不再需要，设为 false 或移除)
 // USER_AGENTS_JSON (例如 ["UA1", "UA2"]) - JSON 字符串数组
 // DEBUG (例如 false 或 true)
 // PASSWORD (例如 "your_password") - 鉴权密码
 // --- 配置结束 ---
 
-// --- 常量 (之前在 config.js 中, 现在移到这里, 因为它们与代理逻辑相关) ---
+// --- 常量 (之前在 config.js 中，现在移到这里，因为它们与代理逻辑相关) ---
 const MEDIA_FILE_EXTENSIONS = [
     '.mp4', '.webm', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.f4v', '.m4v', '.3gp', '.3g2', '.ts', '.mts', '.m2ts',
     '.mp3', '.wav', '.ogg', '.aac', '.m4a', '.flac', '.wma', '.alac', '.aiff', '.opus',
