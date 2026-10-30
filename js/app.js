@@ -735,7 +735,7 @@ async function search() {
             });
         }
 
-        // 添加XSS保护，使用textContent和属性转义
+        /* 海报走站内中转 */ const proxyBase = (typeof PROXY_URL !== 'undefined' ? PROXY_URL : '/proxy/'); await Promise.all(allResults.map(async (item) => { if (item.vod_pic && item.vod_pic.startsWith('http')) { try { item.poster_proxy = (window.ProxyAuth && window.ProxyAuth.addAuthToProxyUrl) ? await window.ProxyAuth.addAuthToProxyUrl(proxyBase + encodeURIComponent(item.vod_pic)) : item.vod_pic; } catch (e) { item.poster_proxy = item.vod_pic; } } })); // 添加XSS保护，使用textContent和属性转义
         const safeResults = allResults.map(item => {
             const safeId = item.vod_id ? item.vod_id.toString().replace(/[^\w-]/g, '') : '';
             const safeName = (item.vod_name || '').toString()
