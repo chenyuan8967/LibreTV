@@ -14,14 +14,22 @@ async function getPasswordHash() {
         return cachedPasswordHash;
     }
     
-    // 1. 优先从已存储的代理鉴权哈希获取
+    // 1. 优先用服务器注入的最新密码哈希：中间件每次页面加载都会注入当前 PASSWORD 的哈希，
+    // 永远不会过期。之前正常模式搜不到，就是因为本地存的旧哈希被优先使用、
+    // 所有中转请求都返回 401，而正确的服务器哈希排在最后、根本没被用到。
+    if (window.__ENV__ && window.__ENV__.PASSWORD) {
+        cachedPasswordHash = window.__ENV__.PASSWORD;
+        return window.__ENV__.PASSWORD;
+    }
+    
+    // 2. 服务器未注入时，才用已存储的代理鉴权哈希
     const storedHash = localStorage.getItem('proxyAuthHash');
     if (storedHash) {
         cachedPasswordHash = storedHash;
         return storedHash;
     }
     
-    // 2. 尝试从密码验证状态获取（password.js 验证后存储的哈希）
+    // 3. 尝试从密码验证状态获取（password.js 验证后存储的哈希）
     const passwordVerified = localStorage.getItem('passwordVerified');
     const storedPasswordHash = localStorage.getItem('passwordHash');
     if (passwordVerified === 'true' && storedPasswordHash) {
@@ -30,7 +38,7 @@ async function getPasswordHash() {
         return storedPasswordHash;
     }
     
-    // 3. 尝试从用户输入的密码生成哈希
+    // 4. 尝试从用户输入的密码生成哈希
     const userPassword = localStorage.getItem('userPassword');
     if (userPassword) {
         try {
@@ -43,12 +51,6 @@ async function getPasswordHash() {
         } catch (error) {
             console.error('生成密码哈希失败:', error);
         }
-    }
-    
-    // 4. 如果用户没有设置密码，尝试使用环境变量中的密码哈希
-    if (window.__ENV__ && window.__ENV__.PASSWORD) {
-        cachedPasswordHash = window.__ENV__.PASSWORD;
-        return window.__ENV__.PASSWORD;
     }
     
     return null;
