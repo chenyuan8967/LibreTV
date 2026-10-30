@@ -481,6 +481,30 @@ function initPlayer(videoUrl) {
                     }
                 }
 
+                                // 原生 HLS 支持（如 iPhone Safari）直接用原生播放：
+                                // iPhone Safari 没有 MSE，hls.js 无法工作，必须走原生，否则一直转圈。
+                                // 不支持原生 HLS 的浏览器（如桌面 Chrome）继续走下面的 hls.js。
+                                if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                                                        currentHls = null;
+                                                        video.addEventListener('playing', function () {
+                                                                                    document.getElementById('player-loading').style.display = 'none';
+                                                                                    document.getElementById('error').style.display = 'none';
+                                                        });
+                                                        // enable airplay, from https://github.com/video-dev/hls.js/issues/5989
+                                                        let sourceElement = video.querySelector('source');
+                                                        if (sourceElement) {
+                                                                                    sourceElement.src = videoUrl;
+                                                        } else {
+                                                                                    sourceElement = document.createElement('source');
+                                                                                    sourceElement.src = videoUrl;
+                                                                                    video.appendChild(sourceElement);
+                                                        }
+                                                        video.disableRemotePlayback = false;
+                                                        video.src = url;
+                                                        video.play().catch(e => {
+                                                        });
+                                                        return;
+                                }
                 // 创建新的HLS实例
                 const hls = new Hls(hlsConfig);
                 currentHls = hls;
