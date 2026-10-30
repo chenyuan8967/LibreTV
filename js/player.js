@@ -500,6 +500,7 @@ function initPlayer(videoUrl) {
                                                                                     video.appendChild(sourceElement);
                                                         }
                                                         video.disableRemotePlayback = false;
+                                                        video.removeAttribute('crossorigin');
                                                         video.src = url;
                                                         video.play().catch(e => {
                                                         });
