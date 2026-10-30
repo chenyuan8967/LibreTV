@@ -503,7 +503,7 @@ export async function onRequest(context) {
     const imagePath = targetUrl.toLowerCase().split('?')[0];
     if (/\.(jpg|jpeg|png|gif|webp|bmp|svg|avif)$/.test(imagePath)) {
         try {
-            const imgResponse = await fetch(targetUrl, { headers: { 'User-Agent': getRandomUserAgent(), 'Referer': new URL(targetUrl).origin }, redirect: 'follow' });
+            const imgTargetHost = new URL(targetUrl).hostname.toLowerCase(); const imgReqHeaders = { 'User-Agent': getRandomUserAgent() }; /* 豆瓣图床防盗链:豆瓣域名不送Referer,其他图床保持原行为 */ if (!imgTargetHost.endsWith('doubanio.com') && !imgTargetHost.endsWith('douban.com')) imgReqHeaders['Referer'] = new URL(targetUrl).origin; const imgResponse = await fetch(targetUrl, { headers: imgReqHeaders, redirect: 'follow' });
             if (!imgResponse.ok) {
                 return createResponse('图片代理失败', imgResponse.status);
             }
