@@ -152,18 +152,24 @@ async function handleApiRequest(url) {
                     // 分割不同播放源
                     const playSources = videoDetail.vod_play_url.split('$$$');
                     
-                    // 提取第一个播放源的集数（通常为主要源）
-                    if (playSources.length > 0) {
-                        const mainSource = playSources[0];
-                        const episodeList = mainSource.split('#');
-                        
-                        // 从每个集数中提取URL
-                        episodes = episodeList.map(ep => {
-                            const parts = ep.split('$');
-                            // 返回URL部分(通常是第二部分，如果有的话)
-                            return parts.length > 1 ? parts[1] : '';
-                        }).filter(url => url && (url.startsWith('http://') || url.startsWith('https://')));
+                    // 从单个播放源提取集数URL
+                    const parseSourceEpisodes = (source) => source.split('#').map(ep => {
+                        const parts = ep.split('$');
+                        // 返回URL部分(通常是第二部分，如果有的话)
+                        return parts.length > 1 ? parts[1] : '';
+                    }).filter(url => url && (url.startsWith('http://') || url.startsWith('https://')));
+                    
+                    // 优先用 m3u8 直链线路：第一条线路常是 share 链接，播放器当 m3u8 播不了；
+                    // 没有 m3u8 线路时回退到第一条（保持原有行为）
+                    let mainSource = playSources.length > 0 ? playSources[0] : '';
+                    for (const source of playSources) {
+                        const urls = parseSourceEpisodes(source);
+                        if (urls.length > 0 && urls.every(url => url.includes('.m3u8'))) {
+                            mainSource = source;
+                            break;
+                        }
                     }
+                    episodes = parseSourceEpisodes(mainSource);
                 }
                 
                 // 如果没有找到播放地址，尝试使用正则表达式查找m3u8链接
