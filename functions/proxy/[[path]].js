@@ -4,13 +4,13 @@
 // 在 Cloudflare Pages 设置 -> 函数 -> 环境变量绑定 中设置以下变量:
 // CACHE_TTL (例如 86400)
 // MAX_RECURSION (例如 5)
-// FILTER_DISCONTINUITY (不再需要，设为 false 或移除)
+// FILTER_DISCONTINUITY (不再需要, 设为 false 或移除)
 // USER_AGENTS_JSON (例如 ["UA1", "UA2"]) - JSON 字符串数组
 // DEBUG (例如 false 或 true)
 // PASSWORD (例如 "your_password") - 鉴权密码
 // --- 配置结束 ---
 
-// --- 常量 (之前在 config.js 中，现在移到这里，因为它们与代理逻辑相关) ---
+// --- 常量 (之前在 config.js 中, 现在移到这里, 因为它们与代理逻辑相关) ---
 const MEDIA_FILE_EXTENSIONS = [
     '.mp4', '.webm', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.f4v', '.m4v', '.3gp', '.3g2', '.ts', '.mts', '.m2ts',
     '.mp3', '.wav', '.ogg', '.aac', '.m4a', '.flac', '.wma', '.alac', '.aiff', '.opus',
@@ -498,6 +498,28 @@ export async function onRequest(context) {
         }
 
         logDebug(`收到代理请求: ${targetUrl}`);
+
+    // --- 图片二进制直通（用于搜索结果海报等）：图片不走文本读取，直接透传响应体，避免 response.text() 破坏图片数据 ---
+    const imagePath = targetUrl.toLowerCase().split('?')[0];
+    if (/\.(jpg|jpeg|png|gif|webp|bmp|svg|avif)$/.test(imagePath)) {
+        try {
+            const imgResponse = await fetch(targetUrl, { headers: { 'User-Agent': getRandomUserAgent(), 'Referer': new URL(targetUrl).origin }, redirect: 'follow' });
+            if (!imgResponse.ok) {
+                return createResponse('图片代理失败', imgResponse.status);
+            }
+            const imgHeaders = new Headers();
+            const imgContentType = imgResponse.headers.get('Content-Type');
+            if (imgContentType) imgHeaders.set('Content-Type', imgContentType);
+            imgHeaders.set('Cache-Control', `public, max-age=${CACHE_TTL}`);
+            imgHeaders.set('Access-Control-Allow-Origin', '*');
+            imgHeaders.set('Access-Control-Allow-Methods', 'GET, HEAD, POST, OPTIONS');
+            imgHeaders.set('Access-Control-Allow-Headers', '*');
+            return new Response(imgResponse.body, { status: 200, headers: imgHeaders });
+        } catch (e) {
+            logDebug(`图片直通失败: ${targetUrl}: ${e.message}`);
+            return createResponse('图片代理失败', 502);
+        }
+    }
 
         // --- 缓存检查 (KV) ---
         const cacheKey = `proxy_raw:${targetUrl}`; // 使用原始内容的缓存键
