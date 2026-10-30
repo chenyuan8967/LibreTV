@@ -118,8 +118,18 @@ async function searchByAPIAndKeyWord(apiId, query) {
                 }
             });
         }
-        
-        return results;
+        // 片名完全一致的排最前面，其次是片名以关键词开头的，其余保持原顺序
+                const q = (query || '').trim();
+                results.sort((a, b) => {
+                                const rank = (item) => {
+                                                    const name = (item.vod_name || '').trim();
+                                                    if (name === q) return 0;
+                                                    if (name.startsWith(q)) return 1;
+                                                    return 2;
+                                };
+                                return rank(a) - rank(b);
+                });
+                    return results;
     } catch (error) {
         console.warn(`API ${apiId} 搜索失败:`, error);
         return [];
